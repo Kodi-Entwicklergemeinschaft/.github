@@ -1,5 +1,9 @@
 # .github
 
+<!-- kodi-badges -->
+![Open Source](https://img.shields.io/badge/Open%20Source-Ja-brightgreen.svg) ![Smart City](https://img.shields.io/badge/Smart%20City-Kommunal-orange.svg) ![Community Health](https://img.shields.io/badge/Community%20Health-Dokumentation-lightgrey.svg) ![KODI](https://img.shields.io/badge/KODI-Entwicklergemeinschaft-blueviolet.svg)
+<!-- /kodi-badges -->
+
 Organization-wide community health files for **Kodi-Entwicklergemeinschaft**.
 
 GitHub uses these as the default for every repository in the organization that does not
