@@ -1,0 +1,45 @@
+# Reusable workflow — mirror a GitHub repo to gitlab.opencode.de
+# Lives in the ORG `.github` repo at: .github/workflows/mirror-to-opencode.yml
+# Called by each repo's .github/workflows/mirror.yml (see caller drafts).
+name: Mirror to openCode
+
+on:
+  workflow_call:
+    inputs:
+      gitlab_repo:
+        description: "Target path on gitlab.opencode.de WITHOUT .git, e.g. group/kodi-web-template-A"
+        required: true
+        type: string
+      gitlab_host:
+        description: "GitLab host"
+        required: false
+        type: string
+        default: gitlab.opencode.de
+    secrets:
+      OPENCODE_GITLAB_TOKEN:
+        description: "gitlab.opencode.de PAT, scope write_repository"
+        required: true
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bare-clone source and push --mirror to openCode
+        env:
+          SRC: ${{ github.server_url }}/${{ github.repository }}.git
+          DEST_HOST: ${{ inputs.gitlab_host }}
+          DEST_REPO: ${{ inputs.gitlab_repo }}
+          GL_TOKEN: ${{ secrets.OPENCODE_GITLAB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Full mirror clone (all branches + tags). Source repo is public → no auth needed.
+          git clone --mirror "$SRC" repo.git
+          cd repo.git
+          # Strip GitHub-only refs GitLab rejects on --mirror push (PRs, merge refs).
+          for ns in refs/pull refs/merge-requests; do
+            git for-each-ref --format='%(refname)' "$ns" \
+              | while read -r ref; do git update-ref -d "$ref"; done || true
+          done
+          # Token kept out of remote URL (no logs); supplied via credential header.
+          git -c http.extraHeader="Authorization: Basic $(printf 'oauth2:%s' "$GL_TOKEN" | base64 -w0)" \
+              push --mirror "https://${DEST_HOST}/${DEST_REPO}.git"
